@@ -5,6 +5,10 @@ out/
 .idea
 *.iml
 
+### Output directories ###
+repo/
+
+
 ### Eclipse ###
 .apt_generated
 .classpath
