@@ -27,6 +27,7 @@ jobs:
             # mandatory
             -Dsonar.projectKey=IronMarken_ML-for-SE
             -Dsonar.organization=ironmarken
+            -Dsonar.java.binaries=.
 
 
 
