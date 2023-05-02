@@ -26,8 +26,8 @@ public class Main {
             rna = new ReleaseNameAdapter(0, "release-");
             rm = new ReleaseManager(projName, gb, rna);
 
-            rm.retrieveReleases();
-            rm.printDebugReleaseLists();
+            rm.setupReleaseManager();
+            //rm.printDebugReleaseLists();
 
 
 

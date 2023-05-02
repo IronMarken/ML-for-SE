@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,7 +17,7 @@ public class GitBoundary {
     private static final Logger LOGGER = Logger.getLogger(GitBoundary.class.getName());
     private static final String DATE_FORMAT = "--date=iso";
     private static final String DATE = "--pretty=format:%cd";
-
+    private static final String FILE_EXT = ".java";
     private final String projectName;
     private final File workingCopy;
 
@@ -56,9 +59,14 @@ public class GitBoundary {
     }
 
 
-    public LocalDateTime getDate(String name) throws IOException {
-        Process process = Runtime.getRuntime().exec(new String[] {"git", "log", name, "-1", DATE ,DATE_FORMAT }, null, this.workingCopy);
-        BufferedReader reader = new BufferedReader (new InputStreamReader(process.getInputStream()));
+    public LocalDateTime getDate(String name, boolean isRelease) throws IOException {
+        Process process;
+
+        if(isRelease)
+            process = Runtime.getRuntime().exec(new String[] {"git", "log", name, "-1", DATE ,DATE_FORMAT }, null, this.workingCopy);
+        else
+            process = Runtime.getRuntime().exec(new String[] {"git", "log", "--diff-filter=A", DATE ,DATE_FORMAT, "--",name }, null, this.workingCopy);
+        BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
         String line;
         String date = null;
         LocalDateTime dateTime = null;
@@ -74,5 +82,27 @@ public class GitBoundary {
 
         return dateTime;
     }
+
+    public List<String> getReleaseClasses(String gitName) throws IOException{
+        List<String> classes = new ArrayList<>();
+
+        Process process = Runtime.getRuntime().exec(new String[] {"git", "ls-tree", "-r", gitName, "--name-only"}, null, this.workingCopy);
+        BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
+        String line;
+        String className = null;
+
+        while((line = reader.readLine()) != null) {
+            className = line;
+
+            //remove last \n
+            className = className.split("\n")[0];
+            if(className.endsWith(FILE_EXT))
+                classes.add(className);
+        }
+        Collections.sort(classes);
+        return classes;
+    }
+
+
 
 }

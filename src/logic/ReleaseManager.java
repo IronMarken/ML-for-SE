@@ -30,6 +30,11 @@ public class ReleaseManager {
         this.nameAdapter = nameAdapter;
     }
 
+    public void setupReleaseManager() throws IOException, JSONException {
+        this.retrieveReleases();
+        this.retrieveClasses();
+    }
+
 
     private void addRelease(String jiraName, String id, LocalDateTime releaseDate) {
         String gitName = nameAdapter.deriveGitName(jiraName);
@@ -66,7 +71,7 @@ public class ReleaseManager {
 
         //released without JiraDate
         if(isReleased && !isDated) {
-            releaseDate = this.gitBoundary.getDate(this.nameAdapter.deriveGitName(name));
+            releaseDate = this.gitBoundary.getDate(this.nameAdapter.deriveGitName(name), true);
             if(releaseDate == null)
                 //date not found in Git
                 this.addUnreleased(name, id);
@@ -82,20 +87,31 @@ public class ReleaseManager {
     }
 
 
-    public void retrieveReleases() throws IOException, JSONException {
+    private void retrieveReleases() throws IOException, JSONException {
         LOGGER.log(Level.INFO, "Retrieving releases");
+        int i;
         //init release array
         this.releases = new ArrayList<>();
         this.unreleased = new ArrayList<>();
         this.releaseSubset = new ArrayList<>();
 
         JSONArray versions = JiraBoundary.getReleases(this.projectName);
-        for (int i = 0; i < versions.length(); i++) {
+        for (i = 0; i < versions.length(); i++) {
             parseRelease(versions.getJSONObject(i));
         }
 
         //order releases by date
         this.releases.sort((Release r1, Release r2) -> r1.getReleaseDate().compareTo(r2.getReleaseDate()));
+
+        LOGGER.log(Level.INFO, "Indexing releases");
+        //set index
+        for (i = 0; i < this.releases.size(); i++ ) {
+            this.releases.get(i).setReleaseIndex(i+1);
+        }
+        //for unreleased maxIndex + 1
+        for (Release release : this.unreleased) {
+            release.setReleaseIndex(i + 1);
+        }
 
         //consider only first half
         this.releaseSubset = this.releases.subList(0, this.releases.size()/2);
@@ -109,6 +125,35 @@ public class ReleaseManager {
         outStr = "Analysis will be carried out considering the first " + this.releaseSubset.size() + " releases";
         LOGGER.log(Level.INFO, outStr);
 
+    }
+
+    private void retrieveClasses() throws IOException {
+        LOGGER.log(Level.INFO, "Retrieving java files for each release");
+        JavaFile javaFile;
+        Release release;
+        List<String> classes;
+        List<JavaFile> fileList;
+
+        String out_string;
+
+        for (int i = 0; i < this.releaseSubset.size(); i++) {
+            release = this.releaseSubset.get(i);
+            fileList = new ArrayList<>();
+            classes = this.gitBoundary.getReleaseClasses(release.getGitName());
+
+            out_string = "Step: " + (i + 1) + "/" + this.releaseSubset.size();
+            LOGGER.log(Level.INFO, out_string);
+
+            for (String className : classes) {
+                LocalDateTime creationDate = this.gitBoundary.getDate(className, false);
+                javaFile = new JavaFile(className, release.getReleaseIndex(), creationDate);
+                fileList.add(javaFile);
+            }
+            release.setJavaFiles(fileList);
+
+            out_string = "Release name: " + release.getGitName() + " Java files rerieved: " + fileList.size();
+            LOGGER.log(Level.INFO, out_string);
+        }
     }
 
     //TODO Debug function
