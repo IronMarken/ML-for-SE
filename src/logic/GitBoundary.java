@@ -18,6 +18,9 @@ public class GitBoundary {
     private static final String DATE_FORMAT = "--date=iso";
     private static final String DATE = "--pretty=format:%cd";
     private static final String FILE_EXT = ".java";
+    private static final String ALL_OPT = "--all";
+    private static final String NO_MERGE_OPT = "--no-merges";
+    private static final String COMMIT_FORMAT = "--pretty=format:%H---%s---%an---%cd---";
     private final String projectName;
     private final File workingCopy;
 
@@ -83,7 +86,7 @@ public class GitBoundary {
         return dateTime;
     }
 
-    public List<String> getReleaseClasses(String gitName) throws IOException{
+    public List<String> getReleaseClasses(String gitName) throws IOException {
         List<String> classes = new ArrayList<>();
 
         Process process = Runtime.getRuntime().exec(new String[] {"git", "ls-tree", "-r", gitName, "--name-only"}, null, this.workingCopy);
@@ -101,6 +104,54 @@ public class GitBoundary {
         }
         Collections.sort(classes);
         return classes;
+    }
+
+    public List<Commit> getReleaseCommits(LocalDateTime afterDate, LocalDateTime beforeDate) throws IOException{
+
+        List<Commit> commits = new ArrayList<>();
+        //managing commits with same date of the release
+
+        LocalDateTime before = beforeDate.plusDays(1);
+
+        String beforeString = "--before="+before.getYear()+"-"+before.getMonthValue()+"-"+before.getDayOfMonth();
+        Process process;
+        //after = null for first release
+        if(afterDate != null) {
+            LocalDateTime after = afterDate.plusDays(1);
+
+            String afterString = "--after="+after.getYear()+"-"+after.getMonthValue()+"-"+after.getDayOfMonth();
+            process = Runtime.getRuntime().exec(new String[] {"git", "log", ALL_OPT, NO_MERGE_OPT,beforeString, afterString, COMMIT_FORMAT, DATE_FORMAT}, null, this.workingCopy);
+        }else {
+            process = Runtime.getRuntime().exec(new String[] {"git", "log", ALL_OPT, NO_MERGE_OPT, beforeString, COMMIT_FORMAT, DATE_FORMAT}, null, this.workingCopy);
+        }
+
+        BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
+        String line;
+        String[] splitted;
+
+        String sha;
+        String message;
+        String author;
+        String date;
+        Commit commit;
+
+        while((line = reader.readLine()) != null) {
+            if(!line.isEmpty()) {
+                splitted = line.split("---");
+                sha = splitted[0];
+                message = splitted[1];
+                author = splitted[2];
+                //get only date
+                date = splitted[3].split(" ")[0];
+
+                commit = new Commit(sha, message, author, date);
+                commits.add(commit);
+
+            }
+        }
+        //order by date
+        commits.sort((Commit c1, Commit c2) -> c1.getDate().compareTo(c2.getDate()));
+        return commits;
     }
 
 

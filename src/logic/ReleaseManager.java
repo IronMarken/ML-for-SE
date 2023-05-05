@@ -31,8 +31,12 @@ public class ReleaseManager {
     }
 
     public void setupReleaseManager() throws IOException, JSONException {
+        // setup releases
         this.retrieveReleases();
+        // setup java classes on each release
         this.retrieveClasses();
+        // retrieve commits for each release
+        this.retrieveReleaseCommit();
     }
 
 
@@ -151,10 +155,44 @@ public class ReleaseManager {
             }
             release.setJavaFiles(fileList);
 
-            out_string = "Release name: " + release.getGitName() + " Java files rerieved: " + fileList.size();
+            out_string = "Release name: " + release.getGitName() + " Java files retrieved: " + fileList.size();
             LOGGER.log(Level.INFO, out_string);
         }
     }
+
+    private void retrieveReleaseCommit() throws IOException{
+        Release release;
+        List<Commit> commitList;
+        LocalDateTime minDate;
+        LocalDateTime maxDate;
+        int i;
+
+        String outString = "Retrieving release commits";
+        LOGGER.log(Level.INFO, outString);
+
+        for(i=0; i < this.releaseSubset.size(); i++) {
+
+            outString = "Release: " + (i + 1) + "/" + this.releaseSubset.size();
+            LOGGER.log(Level.INFO, outString);
+
+            if(i == 0) {
+                // first release
+                minDate = null;
+            }else
+                // other releases
+                minDate = this.releaseSubset.get(i-1).getReleaseDate();
+            release = this.releaseSubset.get(i);
+            maxDate = release.getReleaseDate();
+            commitList = this.gitBoundary.getReleaseCommits(minDate, maxDate);
+            release.setCommitList(commitList);
+            outString = "Release name: " + release.getGitName() + " Java files retrieved: " + commitList.size();
+            LOGGER.log(Level.INFO, outString);
+        }
+        outString = "Commits retrieved";
+        LOGGER.log(Level.INFO, outString);
+    }
+
+
 
     //TODO Debug function
     public void printDebugReleaseLists() {

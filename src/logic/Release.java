@@ -14,6 +14,8 @@ public class Release {
 
     private List<JavaFile> javaFiles;
 
+    private List<Commit> commitList;
+
     public Release(LocalDateTime releaseDate, String jiraName, String gitName, String releaseID) {
         this.releaseDate = releaseDate;
         this.jiraName = jiraName;
@@ -39,6 +41,10 @@ public class Release {
     public void setReleaseIndex(int releaseIndex) { this.releaseIndex = releaseIndex; }
 
     public void setJavaFiles(List<JavaFile> javaFiles) { this.javaFiles = javaFiles;   }
+
+    public void setCommitList(List<Commit> commitList){
+        this.commitList = commitList;
+    }
 
     //TODO Debug function
     public void printDebugRelease(){
