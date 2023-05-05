@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, JSONException {
+    public static void main(String[] args) throws IOException, JSONException, InterruptedException {
         List<String> urlList = new ArrayList<>(Arrays.asList("https://github.com/apache/avro", "https://github.com/apache/bookkeeper"));
         GitBoundary gb;
         ReleaseManager rm;

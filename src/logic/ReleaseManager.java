@@ -30,7 +30,7 @@ public class ReleaseManager {
         this.nameAdapter = nameAdapter;
     }
 
-    public void setupReleaseManager() throws IOException, JSONException {
+    public void setupReleaseManager() throws IOException, JSONException, InterruptedException {
         // setup releases
         this.retrieveReleases();
         // setup java classes on each release
@@ -53,7 +53,7 @@ public class ReleaseManager {
     }
 
 
-    private void parseRelease(JSONObject obj) throws JSONException, IOException {
+    private void parseRelease(JSONObject obj) throws JSONException, IOException, InterruptedException {
         String name = "";
         String id = "";
         LocalDateTime releaseDate;
@@ -91,7 +91,7 @@ public class ReleaseManager {
     }
 
 
-    private void retrieveReleases() throws IOException, JSONException {
+    private void retrieveReleases() throws IOException, JSONException, InterruptedException {
         LOGGER.log(Level.INFO, "Retrieving releases");
         int i;
         //init release array
@@ -131,7 +131,7 @@ public class ReleaseManager {
 
     }
 
-    private void retrieveClasses() throws IOException {
+    private void retrieveClasses() throws IOException, InterruptedException {
         LOGGER.log(Level.INFO, "Retrieving java files for each release");
         JavaFile javaFile;
         Release release;
@@ -160,7 +160,7 @@ public class ReleaseManager {
         }
     }
 
-    private void retrieveReleaseCommit() throws IOException{
+    private void retrieveReleaseCommit() throws IOException, InterruptedException {
         Release release;
         List<Commit> commitList;
         LocalDateTime minDate;
@@ -185,7 +185,7 @@ public class ReleaseManager {
             maxDate = release.getReleaseDate();
             commitList = this.gitBoundary.getReleaseCommits(minDate, maxDate);
             release.setCommitList(commitList);
-            outString = "Release name: " + release.getGitName() + " Java files retrieved: " + commitList.size();
+            outString = "Release name: " + release.getGitName() + " Commits retrieved: " + commitList.size();
             LOGGER.log(Level.INFO, outString);
         }
         outString = "Commits retrieved";

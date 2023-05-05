@@ -26,12 +26,13 @@ public class GitBoundary {
 
 
 
-    public GitBoundary(String gitUrl ) throws IOException {
+    public GitBoundary(String gitUrl ) throws IOException, InterruptedException {
 
         //parse project name
         String[] splitted = gitUrl.split("/");
         this.projectName = splitted[splitted.length-1];
 
+        Process process;
         String outputString = "Creating git boundary for " + this.projectName;
         LOGGER.log(Level.INFO, outputString);
 
@@ -51,18 +52,20 @@ public class GitBoundary {
         if(!this.workingCopy.exists()) {
             //clone
             LOGGER.log(Level.INFO,"Cloning project please wait...");
-            Runtime.getRuntime().exec(new String[] {"git", "clone", gitUrl}, null, new File("repo"));
+            process = Runtime.getRuntime().exec(new String[] {"git", "clone", gitUrl}, null, new File("repo"));
+            process.waitFor();
             LOGGER.log(Level.INFO, "Project cloned");
         } else {
             //pull
             LOGGER.log(Level.INFO, "Project exists pulling it please wait...");
-            Runtime.getRuntime().exec(new String[] {"git", "pull"}, null, this.workingCopy);
+            process = Runtime.getRuntime().exec(new String[] {"git", "pull"}, null, this.workingCopy);
+            process.waitFor();
             LOGGER.log(Level.INFO, "Pull terminated");
         }
     }
 
 
-    public LocalDateTime getDate(String name, boolean isRelease) throws IOException {
+    public LocalDateTime getDate(String name, boolean isRelease) throws IOException, InterruptedException {
         Process process;
 
         if(isRelease)
@@ -70,6 +73,8 @@ public class GitBoundary {
         else
             process = Runtime.getRuntime().exec(new String[] {"git", "log", "--diff-filter=A", DATE ,DATE_FORMAT, "--",name }, null, this.workingCopy);
         BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
+        process.waitFor();
+
         String line;
         String date = null;
         LocalDateTime dateTime = null;
@@ -86,11 +91,14 @@ public class GitBoundary {
         return dateTime;
     }
 
-    public List<String> getReleaseClasses(String gitName) throws IOException {
+    public List<String> getReleaseClasses(String gitName) throws IOException, InterruptedException {
         List<String> classes = new ArrayList<>();
 
         Process process = Runtime.getRuntime().exec(new String[] {"git", "ls-tree", "-r", gitName, "--name-only"}, null, this.workingCopy);
         BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
+
+        process.waitFor();
+
         String line;
         String className = null;
 
@@ -106,7 +114,7 @@ public class GitBoundary {
         return classes;
     }
 
-    public List<Commit> getReleaseCommits(LocalDateTime afterDate, LocalDateTime beforeDate) throws IOException{
+    public List<Commit> getReleaseCommits(LocalDateTime afterDate, LocalDateTime beforeDate) throws IOException, InterruptedException {
 
         List<Commit> commits = new ArrayList<>();
         //managing commits with same date of the release
@@ -124,6 +132,8 @@ public class GitBoundary {
         }else {
             process = Runtime.getRuntime().exec(new String[] {"git", "log", ALL_OPT, NO_MERGE_OPT, beforeString, COMMIT_FORMAT, DATE_FORMAT}, null, this.workingCopy);
         }
+
+        process.waitFor();
 
         BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
         String line;
