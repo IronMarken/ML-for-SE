@@ -138,15 +138,15 @@ public class ReleaseManager {
         List<String> classes;
         List<JavaFile> fileList;
 
-        String out_string;
+        String outString;
 
         for (int i = 0; i < this.releaseSubset.size(); i++) {
             release = this.releaseSubset.get(i);
             fileList = new ArrayList<>();
             classes = this.gitBoundary.getReleaseClasses(release.getGitName());
 
-            out_string = "Step: " + (i + 1) + "/" + this.releaseSubset.size();
-            LOGGER.log(Level.INFO, out_string);
+            outString = "Step: " + (i + 1) + "/" + this.releaseSubset.size();
+            LOGGER.log(Level.INFO, outString);
 
             for (String className : classes) {
                 LocalDateTime creationDate = this.gitBoundary.getDate(className, false);
@@ -155,8 +155,8 @@ public class ReleaseManager {
             }
             release.setJavaFiles(fileList);
 
-            out_string = "Release name: " + release.getGitName() + " Java files retrieved: " + fileList.size();
-            LOGGER.log(Level.INFO, out_string);
+            outString = "Release name: " + release.getGitName() + " Java files retrieved: " + fileList.size();
+            LOGGER.log(Level.INFO, outString);
         }
     }
 
@@ -184,12 +184,42 @@ public class ReleaseManager {
             release = this.releaseSubset.get(i);
             maxDate = release.getReleaseDate();
             commitList = this.gitBoundary.getReleaseCommits(minDate, maxDate);
-            release.setCommitList(commitList);
             outString = "Release name: " + release.getGitName() + " Commits retrieved: " + commitList.size();
             LOGGER.log(Level.INFO, outString);
+            commitList = this.retrieveCommitsData(commitList);
+            release.setCommitList(commitList);
         }
         outString = "Commits retrieved";
         LOGGER.log(Level.INFO, outString);
+    }
+
+
+    private List<Commit> retrieveCommitsData(List<Commit> commitList) throws IOException, InterruptedException {
+        List<Commit> finalList = new ArrayList<>();
+        List<CommitFileData> dataList;
+        String outStr;
+
+        outStr = "Retrieving java classes touched by the commits";
+        LOGGER.log(Level.INFO, outStr);
+
+        int withFileCount = 0;
+
+        for(Commit commit: commitList){
+            // get data of file touched by the commit
+            dataList = this.gitBoundary.getCommitData(commit.getSha());
+
+            // touched at least a java class
+            if(!dataList.isEmpty()){
+                commit.setTouchedFiles(dataList);
+                withFileCount ++;
+            }
+            outStr = "Commit " + commit.getSha() + " touched " + dataList.size() + " java classes";
+            LOGGER.log(Level.INFO, outStr);
+            finalList.add(commit);
+        }
+        outStr = "Phase completed\n Parsed: " + commitList.size() + "\tCommit with java classes: " + withFileCount + "\tCommit without java classes: " + (commitList.size() - withFileCount);
+        LOGGER.log(Level.INFO, outStr);
+        return finalList;
     }
 
 

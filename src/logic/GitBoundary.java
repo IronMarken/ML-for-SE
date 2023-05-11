@@ -164,6 +164,37 @@ public class GitBoundary {
         return commits;
     }
 
+    public List<CommitFileData> getCommitData(String sha) throws IOException, InterruptedException {
+        List<CommitFileData> dataList = new ArrayList<>();
+
+        Process process = Runtime.getRuntime().exec(new String[] {"git", "show", "--numstat" ,"--format=",sha,"-1"}, null, this.workingCopy);
+        BufferedReader reader = new BufferedReader (new InputStreamReader (process.getInputStream()));
+
+        process.waitFor();
+
+        CommitFileData dataFile;
+        int added;
+        int deleted;
+        String name;
+
+        String line;
+        String [] splitted;
+
+        while((line = reader.readLine()) != null) {
+            if(!line.isEmpty() && line.endsWith(FILE_EXT)) {
+                splitted = line.split("\t");
+                added = Integer.parseInt(splitted[0]);
+                deleted = Integer.parseInt(splitted[1]);
+                name = splitted[2];
+
+                dataFile = new CommitFileData(name, added, deleted);
+                dataList.add(dataFile);
+            }
+        }
+        dataList.sort((CommitFileData df1, CommitFileData df2) -> df1.getName().compareTo(df2.getName()));
+        return dataList;
+    }
+
 
 
 }
