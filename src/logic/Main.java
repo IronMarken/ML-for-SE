@@ -1,15 +1,12 @@
 package logic;
 
-import org.json.JSONException;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, JSONException, InterruptedException {
+    public static void main(String[] args) throws Exception {
         List<String> urlList = new ArrayList<>(Arrays.asList("https://github.com/apache/avro", "https://github.com/apache/bookkeeper"));
         GitBoundary gb;
         ReleaseManager rm;
@@ -27,11 +24,6 @@ public class Main {
             rm = new ReleaseManager(projName, gb, rna);
 
             rm.setupReleaseManager();
-            //rm.printDebugReleaseLists();
-
-
-
-
         }
     }
 }

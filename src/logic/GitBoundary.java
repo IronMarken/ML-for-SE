@@ -1,5 +1,7 @@
 package logic;
 
+import org.json.JSONException;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -176,12 +178,16 @@ public class GitBoundary {
         int added;
         int deleted;
         String name;
+        Integer chgSetSize;
 
         String line;
         String [] splitted;
 
+        chgSetSize = 0;
+
         while((line = reader.readLine()) != null) {
             if(!line.isEmpty() && line.endsWith(FILE_EXT)) {
+                chgSetSize ++;
                 splitted = line.split("\t");
                 added = Integer.parseInt(splitted[0]);
                 deleted = Integer.parseInt(splitted[1]);
@@ -191,10 +197,33 @@ public class GitBoundary {
                 dataList.add(dataFile);
             }
         }
+
+        for(CommitFileData touchedFile: dataList) {
+            //don't count file itself
+            touchedFile.setChgSetSize(chgSetSize-1);
+        }
+
         dataList.sort((CommitFileData df1, CommitFileData df2) -> df1.getName().compareTo(df2.getName()));
         return dataList;
     }
 
+    public void changeRelease(String releaseName) throws IOException, InterruptedException {
+        Process process = Runtime.getRuntime().exec(new String[] {"git","checkout",releaseName}, null, this.workingCopy);
+        process.waitFor();
+    }
 
+    public void restoreLastRelease() throws IOException, InterruptedException {
+        this.changeRelease("master");
+    }
+
+    public List<Integer> getSizes(String releaseName, String filePath) throws IOException, InterruptedException, JSONException {
+        this.changeRelease(releaseName);
+        List<Integer> returnSizes = TokeiBoundary.getSizes(filePath, this.workingCopy);
+        this.restoreLastRelease();
+        return returnSizes;
+    }
+
+
+    public File getWorkingCopy() { return this.workingCopy;}
 
 }

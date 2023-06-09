@@ -24,19 +24,23 @@ public class ReleaseManager {
     private List<Release> releaseSubset;
 
 
-    public ReleaseManager(String projectName, GitBoundary gitBoundary, ReleaseNameAdapter nameAdapter ) {
+    public ReleaseManager(String projectName, GitBoundary gitBoundary, ReleaseNameAdapter nameAdapter) {
         this.projectName = projectName;
         this.gitBoundary = gitBoundary;
         this.nameAdapter = nameAdapter;
     }
 
-    public void setupReleaseManager() throws IOException, JSONException, InterruptedException {
+    public void setupReleaseManager() throws Exception {
         // setup releases
         this.retrieveReleases();
         // setup java classes on each release
         this.retrieveClasses();
+        // calculate sizes
+        this.retrieveJavaFileSize();
         // retrieve commits for each release
         this.retrieveReleaseCommit();
+        //calculate classes data
+        this.retrieveData();
     }
 
 
@@ -59,24 +63,24 @@ public class ReleaseManager {
         LocalDateTime releaseDate;
 
         //get parameters from the JSON
-        if(obj.has("name"))
+        if (obj.has("name"))
             name = obj.getString("name");
-        if(obj.has("id"))
+        if (obj.has("id"))
             id = obj.getString("id");
 
         boolean isReleased = obj.getBoolean("released");
         boolean isDated = obj.has("releaseDate");
 
         //released with JiraDate
-        if(isReleased && isDated) {
+        if (isReleased && isDated) {
             releaseDate = LocalDate.parse(obj.getString("releaseDate")).atStartOfDay();
             this.addRelease(name, id, releaseDate);
         }
 
         //released without JiraDate
-        if(isReleased && !isDated) {
+        if (isReleased && !isDated) {
             releaseDate = this.gitBoundary.getDate(this.nameAdapter.deriveGitName(name), true);
-            if(releaseDate == null)
+            if (releaseDate == null)
                 //date not found in Git
                 this.addUnreleased(name, id);
             else
@@ -86,7 +90,7 @@ public class ReleaseManager {
         }
 
         //unreleased version
-        if(!isReleased)
+        if (!isReleased)
             this.addUnreleased(name, id);
     }
 
@@ -109,8 +113,8 @@ public class ReleaseManager {
 
         LOGGER.log(Level.INFO, "Indexing releases");
         //set index
-        for (i = 0; i < this.releases.size(); i++ ) {
-            this.releases.get(i).setReleaseIndex(i+1);
+        for (i = 0; i < this.releases.size(); i++) {
+            this.releases.get(i).setReleaseIndex(i + 1);
         }
         //for unreleased maxIndex + 1
         for (Release release : this.unreleased) {
@@ -118,7 +122,7 @@ public class ReleaseManager {
         }
 
         //consider only first half
-        this.releaseSubset = this.releases.subList(0, this.releases.size()/2);
+        this.releaseSubset = this.releases.subList(0, this.releases.size() / 2);
 
         String outStr = "Retrieved " + this.releases.size() + " releases released";
         LOGGER.log(Level.INFO, outStr);
@@ -131,7 +135,8 @@ public class ReleaseManager {
 
     }
 
-    private void retrieveClasses() throws IOException, InterruptedException {
+    //retrieve the classes of each release their size and age in weeks
+    private void retrieveClasses() throws Exception {
         LOGGER.log(Level.INFO, "Retrieving java files for each release");
         JavaFile javaFile;
         Release release;
@@ -150,14 +155,46 @@ public class ReleaseManager {
 
             for (String className : classes) {
                 LocalDateTime creationDate = this.gitBoundary.getDate(className, false);
-                javaFile = new JavaFile(className, release.getReleaseIndex(), creationDate);
-                fileList.add(javaFile);
+                //filter limit case
+                if (creationDate.isBefore(release.getReleaseDate())) {
+                    javaFile = new JavaFile(className, release.getReleaseIndex(), creationDate/*, sizes.get(0), sizes.get(1)*/);
+                    //exec age
+                    javaFile.execAge(release.getReleaseDate());
+                    fileList.add(javaFile);
+                }
             }
             release.setJavaFiles(fileList);
 
             outString = "Release name: " + release.getGitName() + " Java files retrieved: " + fileList.size();
             LOGGER.log(Level.INFO, outString);
         }
+    }
+
+    private void retrieveJavaFileSize() throws IOException, InterruptedException, JSONException {
+        Release release;
+        int relSize = this.releaseSubset.size();
+        int index = 0;
+        List<Integer> sizes;
+        LOGGER.log(Level.INFO, "Calculating file size for each file in each release");
+        for (index = 0; index < relSize; index++) {
+            String outStr = "Release " + (index + 1) + "/" + relSize;
+            LOGGER.log(Level.INFO, outStr);
+
+            release = this.releaseSubset.get(index);
+            //change version on repo
+            this.gitBoundary.changeRelease(release.getGitName());
+
+            //calculate size for each file
+            for (JavaFile file : release.getJavaFiles()) {
+                //[0] codes
+                //[1] comments
+                sizes = TokeiBoundary.getSizes(file.getName(), this.gitBoundary.getWorkingCopy());
+                file.setSizes(sizes.get(0), sizes.get(1));
+            }
+        }
+        //reset last version
+        this.gitBoundary.restoreLastRelease();
+
     }
 
     private void retrieveReleaseCommit() throws IOException, InterruptedException {
@@ -170,17 +207,17 @@ public class ReleaseManager {
         String outString = "Retrieving release commits";
         LOGGER.log(Level.INFO, outString);
 
-        for(i=0; i < this.releaseSubset.size(); i++) {
+        for (i = 0; i < this.releaseSubset.size(); i++) {
 
             outString = "Release: " + (i + 1) + "/" + this.releaseSubset.size();
             LOGGER.log(Level.INFO, outString);
 
-            if(i == 0) {
+            if (i == 0) {
                 // first release
                 minDate = null;
-            }else
+            } else
                 // other releases
-                minDate = this.releaseSubset.get(i-1).getReleaseDate();
+                minDate = this.releaseSubset.get(i - 1).getReleaseDate();
             release = this.releaseSubset.get(i);
             maxDate = release.getReleaseDate();
             commitList = this.gitBoundary.getReleaseCommits(minDate, maxDate);
@@ -204,14 +241,14 @@ public class ReleaseManager {
 
         int withFileCount = 0;
 
-        for(Commit commit: commitList){
+        for (Commit commit : commitList) {
             // get data of file touched by the commit
             dataList = this.gitBoundary.getCommitData(commit.getSha());
 
             // touched at least a java class
-            if(!dataList.isEmpty()){
+            if (!dataList.isEmpty()) {
                 commit.setTouchedFiles(dataList);
-                withFileCount ++;
+                withFileCount++;
             }
             outStr = "Commit " + commit.getSha() + " touched " + dataList.size() + " java classes";
             LOGGER.log(Level.INFO, outStr);
@@ -222,25 +259,44 @@ public class ReleaseManager {
         return finalList;
     }
 
+    private void retrieveData() {
+        LOGGER.log(Level.INFO, "Calculating file data");
+        JavaFile javaFile;
+        String fileName;
+        String author;
+        Integer added;
+        Integer deleted;
+        Integer chgSetSize;
+        Release release;
 
+        String outStr;
+        int counter;
 
-    //TODO Debug function
-    public void printDebugReleaseLists() {
-        System.out.println("\nReleased " + this.releases.size());
-        for(Release release : this.releases){
-            release.printDebugRelease();
+        for (counter = 0; counter < this.releaseSubset.size(); counter++) {
+            outStr = "Release " + (counter + 1) + "/" + this.releaseSubset.size();
+            LOGGER.log(Level.INFO, outStr);
+            release = this.releaseSubset.get(counter);
+            for (Commit commit : release.getCommitList()) {
+                author = commit.getAuthor();
+                for (CommitFileData touchedFile : commit.getTouchedFiles()) {
+                    fileName = touchedFile.getName();
+                    added = touchedFile.getAdded();
+                    deleted = touchedFile.getDeleted();
+                    chgSetSize = touchedFile.getChgSetSize();
+
+                    javaFile = release.getClassByName(fileName);
+                    if (javaFile != null) {
+                        //set needed parameters
+                        javaFile.increaseCommitCount();
+                        javaFile.increaseTouchedLOC(added, deleted);
+                        javaFile.addAuthor(author);
+                        javaFile.addAddedCount(added);
+                        javaFile.addChurnCount(added, deleted);
+                        javaFile.addChgSetSize(chgSetSize);
+                    }
+                }
+            }
         }
-
-        System.out.println("\nUnreleased " + this.unreleased.size());
-        for(Release release : this.unreleased){
-            release.printDebugRelease();
-        }
-
-        System.out.println("\nSubset " + this.releaseSubset.size());
-        for(Release release : this.releaseSubset){
-            release.printDebugRelease();
-        }
+        LOGGER.log(Level.INFO, "Classes data calculated");
     }
-
-
 }

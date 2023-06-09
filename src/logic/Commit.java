@@ -31,4 +31,8 @@ public class Commit {
     public void setTouchedFiles(List<CommitFileData> touchedFiles) {
         this.touchedFiles = touchedFiles;
     }
+
+    public String getAuthor() { return this.author; }
+
+    public List<CommitFileData> getTouchedFiles() { return this.touchedFiles; }
 }

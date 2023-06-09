@@ -30,6 +30,8 @@ public class Release {
         this.releaseID = releaseID;
     }
 
+    public List<JavaFile> getJavaFiles(){ return this.javaFiles; }
+
 
     public LocalDateTime getReleaseDate() {
         return releaseDate;
@@ -46,13 +48,11 @@ public class Release {
         this.commitList = commitList;
     }
 
-    //TODO Debug function
-    public void printDebugRelease(){
-        String outStr = "\tIndex: "+ this.releaseIndex + " JiraName: " + this.jiraName + " GitName: " + this.gitName + " ReleaseID: " + this.releaseID;
-        if(this.releaseDate != null){
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            outStr = "\tReleaseDate: " + this.releaseDate.format(dateTimeFormatter) + outStr;
-        }
-        System.out.println(outStr);
+    public List<Commit> getCommitList(){ return this.commitList; }
+
+    public JavaFile getClassByName(String name) {
+        JavaFile file;
+        file = this.javaFiles.stream().filter(f -> name.contentEquals(f.getName())).findAny().orElse(null);
+        return file;
     }
 }
