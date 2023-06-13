@@ -2,6 +2,8 @@ package logic;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class Release {
@@ -55,4 +57,24 @@ public class Release {
         file = this.javaFiles.stream().filter(f -> name.contentEquals(f.getName())).findAny().orElse(null);
         return file;
     }
+
+    public static Release getMaxRelease(List<Release> list) {
+        Release rel = null;
+
+        if(!list.isEmpty())
+            rel = Collections.max(list, Comparator.comparing(Release::getReleaseIndex));
+
+        return rel;
+    }
+
+    public static Release getMinRelease(List<Release> list) {
+        Release rel = null;
+
+        if(!list.isEmpty())
+            rel = Collections.min(list, Comparator.comparing(Release::getReleaseIndex));
+
+        return rel;
+    }
+
+    public String getJiraName() { return this.jiraName; }
 }

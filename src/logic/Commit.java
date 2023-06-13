@@ -35,4 +35,13 @@ public class Commit {
     public String getAuthor() { return this.author; }
 
     public List<CommitFileData> getTouchedFiles() { return this.touchedFiles; }
+
+    public List<String> getTouchedFilesNames() {
+        // return only the names of touched files
+        List<String> nameList = new ArrayList<>();
+        for(CommitFileData fileData: this.touchedFiles){
+            nameList.add(fileData.getName());
+        }
+        return nameList;
+    }
 }

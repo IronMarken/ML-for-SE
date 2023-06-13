@@ -136,7 +136,7 @@ public class ReleaseManager {
     }
 
     //retrieve the classes of each release their size and age in weeks
-    private void retrieveClasses() throws Exception {
+    private void retrieveClasses() throws IOException, InterruptedException {
         LOGGER.log(Level.INFO, "Retrieving java files for each release");
         JavaFile javaFile;
         Release release;
@@ -298,5 +298,35 @@ public class ReleaseManager {
             }
         }
         LOGGER.log(Level.INFO, "Classes data calculated");
+    }
+
+    public Release getReleaseFromDate(String date) {
+        Release rel;
+        Release actual;
+        rel = null;
+
+        LocalDateTime ldt = LocalDate.parse(date).atStartOfDay();
+
+        //return the first release with first date after given date
+        for (Release release : this.releases) {
+            actual = release;
+            if (ldt.isBefore(actual.getReleaseDate())) {
+                return actual;
+            }
+        }
+
+        //if no release match get the first unreleased or null
+        if(!this.unreleased.isEmpty())
+            rel = this.unreleased.get(0);
+
+        return rel;
+    }
+
+    public Release getReleaseByJiraName(String jiraName) {
+        Release rel;
+        rel = this.releases.stream().filter(release -> jiraName.equals(release.getJiraName())).findAny().orElse(null);
+        if(rel == null)
+            rel = this.unreleased.stream().filter(release -> jiraName.equals(release.getJiraName())).findAny().orElse(null);
+        return rel;
     }
 }

@@ -11,6 +11,7 @@ public class Main {
         GitBoundary gb;
         ReleaseManager rm;
         ReleaseNameAdapter rna;
+        IssueManager im;
         String[] splitted;
         String projName;
 
@@ -22,8 +23,11 @@ public class Main {
             gb = new GitBoundary(gitUrl);
             rna = new ReleaseNameAdapter(0, "release-");
             rm = new ReleaseManager(projName, gb, rna);
+            im = new IssueManager(projName, rm, gb);
 
             rm.setupReleaseManager();
+
+            im.retrieveIssues();
         }
     }
 }
