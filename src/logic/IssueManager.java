@@ -96,7 +96,6 @@ public class IssueManager {
 
         Issue issue;
         List<Commit> commitList;
-        boolean emptyList;
 
         int nullVersionCount = 0;
         int inconsistentCount = 0;
@@ -122,23 +121,29 @@ public class IssueManager {
                 fixVersion = this.retrieveFixedVersion(issuesJson.getJSONObject(i).getJSONObject(ISSUE_FIELDS).getJSONArray("fixVersions"));
                 openingVersion = this.releaseManager.getReleaseFromDate(openingDate);
 
-                // filter null fixVersions or openingVersion
-                if(openingVersion != null && fixVersion != null){
-                    issue = new Issue(id, key, injectedVersion, fixVersion, openingVersion);
-                    // check data consistency
-                    if(issue.isValid()) {
-                        commitList = this.gitBoundary.getIssueCommit(issue);
-                        emptyList = commitList.isEmpty();
-                        issue.setCommitList(commitList);
-                        // additional data for proportion
-                        if(!emptyList || injectedVersion != null) {
-                            this.issueList.add(issue);
-                        }else emptyCount ++;
-                    }else
-                        inconsistentCount ++;
+                // generate issue and related commmits
+                issue = new Issue(id, key, injectedVersion, fixVersion, openingVersion);
+                commitList = this.gitBoundary.getIssueCommit(issue);
+                issue.setCommitList(commitList);
 
-                }else
-                    nullVersionCount ++;
+                switch(issue.validateIssue()){
+                    //skip issue because opening or fix versions are null
+                    case NULL_VERSION:
+                        nullVersionCount++;
+                        break;
+                    //skip issue because data is inconsistent
+                    case INCONSISTENT:
+                        inconsistentCount++;
+                        break;
+                    //skip issue because commit list is empty and injected is null
+                    case NULL_EMPTY:
+                        emptyCount++;
+                        break;
+                    //valid issue
+                    case VALID:
+                    default:
+                        this.issueList.add(issue);
+                }
                 totalCount ++;
             }
         }while(i < total);

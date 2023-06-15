@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 
 public class JavaFile {
 
-    private static final Logger LOGGER = Logger.getLogger(JavaFile.class.getName());
     private int releaseIndex;
     private String className;
     private LocalDateTime creationDate;

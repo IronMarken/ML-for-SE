@@ -14,6 +14,13 @@ public class Issue {
     private List<Commit> commitList;
     private List<String> touchedFiles;
 
+    public  enum Status {
+        NULL_VERSION,
+        INCONSISTENT,
+        NULL_EMPTY,
+        VALID
+    }
+
 
     public Issue(String id, String key, Release injectedVersion, Release fixVersion, Release openingVersion) {
         this.id = id;
@@ -39,7 +46,7 @@ public class Issue {
 
     public Integer getIndex(){ return this.index; }
 
-    public boolean isValid(){
+    private boolean isConsistent(){
         boolean valid = true;
         int openingVersionIndex = this.openingVersion.getReleaseIndex();
         int fixVersionIndex = this.fixVersion.getReleaseIndex();
@@ -59,5 +66,22 @@ public class Issue {
     public void setCommitList(List<Commit> commitList) {
         this.commitList = commitList;
         this.retrieveTouchedFiles();
+    }
+
+    private boolean isVersionNull(){
+        return fixVersion == null || openingVersion == null;
+    }
+
+
+    public Status validateIssue() {
+        // check if opening version or fix version are null
+        if(this.isVersionNull()) return Status.NULL_VERSION;
+        // check versions consistency
+        if(!this.isConsistent()) return Status.INCONSISTENT;
+        // check injected version is null
+        if(this.injectedVersion == null && this.commitList.isEmpty()) return Status.NULL_EMPTY;
+        // all check passed
+        return Status.VALID;
+
     }
 }

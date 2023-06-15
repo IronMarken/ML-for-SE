@@ -30,7 +30,7 @@ public class ReleaseManager {
         this.nameAdapter = nameAdapter;
     }
 
-    public void setupReleaseManager() throws Exception {
+    public void setupReleaseManager() throws JSONException, IOException, InterruptedException {
         // setup releases
         this.retrieveReleases();
         // setup java classes on each release
@@ -250,8 +250,6 @@ public class ReleaseManager {
                 commit.setTouchedFiles(dataList);
                 withFileCount++;
             }
-            outStr = "Commit " + commit.getSha() + " touched " + dataList.size() + " java classes";
-            LOGGER.log(Level.INFO, outStr);
             finalList.add(commit);
         }
         outStr = "Phase completed\n Parsed: " + commitList.size() + "\tCommit with java classes: " + withFileCount + "\tCommit without java classes: " + (commitList.size() - withFileCount);
