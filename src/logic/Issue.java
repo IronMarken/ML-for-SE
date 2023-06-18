@@ -18,6 +18,7 @@ public class Issue {
         NULL_VERSION,
         INCONSISTENT,
         NULL_EMPTY,
+        IV_IS_FV,
         VALID
     }
 
@@ -78,10 +79,26 @@ public class Issue {
         if(this.isVersionNull()) return Status.NULL_VERSION;
         // check versions consistency
         if(!this.isConsistent()) return Status.INCONSISTENT;
-        // check injected version is null
+        // check injected version is null and no commits
         if(this.injectedVersion == null && this.commitList.isEmpty()) return Status.NULL_EMPTY;
+        if(this.injectedVersion != null && this.injectedVersion.getReleaseIndex() == this.fixVersion.getReleaseIndex()) return Status.IV_IS_FV;
         // all check passed
         return Status.VALID;
+    }
 
+    public Release getFixVersion() {
+        return this.fixVersion;
+    }
+
+    public Release getInjectedVersion() {
+        return this.injectedVersion;
+    }
+
+    public Release getOpeningVersion() {
+        return this.openingVersion;
+    }
+
+    public void setInjectedVersion(Release injectedVersion) {
+        this.injectedVersion = injectedVersion;
     }
 }

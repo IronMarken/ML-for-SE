@@ -27,7 +27,7 @@ public class Main {
 
             rm.setupReleaseManager();
 
-            im.retrieveIssues();
+            im.setupIssues();
         }
     }
 }

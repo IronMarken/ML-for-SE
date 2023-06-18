@@ -112,7 +112,7 @@ public class ReleaseManager {
         this.releases.sort((Release r1, Release r2) -> r1.getReleaseDate().compareTo(r2.getReleaseDate()));
 
         LOGGER.log(Level.INFO, "Indexing releases");
-        //set index
+        //set index starting from 1
         for (i = 0; i < this.releases.size(); i++) {
             this.releases.get(i).setReleaseIndex(i + 1);
         }
@@ -326,5 +326,13 @@ public class ReleaseManager {
         if(rel == null)
             rel = this.unreleased.stream().filter(release -> jiraName.equals(release.getJiraName())).findAny().orElse(null);
         return rel;
+    }
+
+    public List<Release> getReleases() {
+        return this.releases;
+    }
+
+    public List<Release> getUnreleased() {
+        return this.unreleased;
     }
 }
