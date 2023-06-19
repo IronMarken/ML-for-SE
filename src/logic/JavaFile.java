@@ -34,9 +34,12 @@ public class JavaFile {
     private List<Integer> churnList;
     //amount of files committed with
     private List<Integer> chgSetSizeList;
+    //number of fix
+    private int nFix;
+    private boolean buggy;
 
 
-    public JavaFile(String className, int releaseIndex, LocalDateTime creationDate){
+    public JavaFile(String className, int releaseIndex, LocalDateTime creationDate) {
         this.className = className;
         this.releaseIndex = releaseIndex;
         this.creationDate = creationDate;
@@ -44,6 +47,8 @@ public class JavaFile {
         this.commitCount = 0;
         this.size = 0;
         this.comments = 0;
+        this.nFix = 0;
+        this.buggy = false;
 
 
         this.authorList = new ArrayList<>();
@@ -65,9 +70,13 @@ public class JavaFile {
         this.commentsPercentage = (float) this.comments / (this.comments + this.size);
     }
 
-    public String getName() { return this.className; }
+    public String getName() {
+        return this.className;
+    }
 
-    public void increaseCommitCount() { this.commitCount++; }
+    public void increaseCommitCount() {
+        this.commitCount++;
+    }
 
     public void increaseTouchedLOC(long added, long deleted) {
         this.touchedLOC = this.touchedLOC + added + deleted;
@@ -75,7 +84,7 @@ public class JavaFile {
 
     public void addAuthor(String authorName) {
         //add only new names
-        if(!this.authorList.contains(authorName))
+        if (!this.authorList.contains(authorName))
             this.authorList.add(authorName);
     }
 
@@ -84,10 +93,15 @@ public class JavaFile {
     }
 
     public void addChurnCount(Integer added, Integer deleted) {
-        this.churnList.add(added-deleted);
+        this.churnList.add(added - deleted);
     }
 
     public void addChgSetSize(Integer count) {
         this.chgSetSizeList.add(count);
+    }
+
+    public void setBuggy() {
+        this.buggy = true;
+        this.nFix++;
     }
 }

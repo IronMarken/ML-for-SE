@@ -30,55 +30,67 @@ public class IssueManager {
         this.issueList = new ArrayList<>();
     }
 
-    public void setupIssues() throws JSONException, IOException {
+    public void setupIssues() throws JSONException, IOException, InterruptedException {
         // retrieve issues
         retrieveIssues();
         // add injected version where needed with proportion
         proportion();
         //filter after proportion
         filterAfterProportion();
-
+        //set buggy to classes
+        setBuggy();
     }
 
     private void filterAfterProportion(){
         String report = "Filtering after proportion";
         LOGGER.log(Level.INFO, report);
-        int nullVersionCnt = 0;
-        int inconsistentCnt= 0;
-        int emptyCnt = 0;
-        int sameVersionCnt = 0;
+
+        int inconsistentCounter= 0;
+        int ivIsFvCounter = 0;
+        int emptyTouchedFilesCounter = 0;
+        int afterLastCounter = 0;
+
         int totalCnt = 0;
+
         List<Issue> filteredList = new ArrayList<>();
 
-        for (Issue issue: this.issueList){
-            switch(issue.validateIssue()){
-                case NULL_VERSION:
-                    nullVersionCnt++;
-                    break;
+
+        Release lastReleaseConsidered = this.releaseManager.getLastReleaseConsidered();
+
+        for(Issue issue: this.issueList){
+            totalCnt ++;
+
+            switch(issue.validateIssueAfterProportion(lastReleaseConsidered)){
+                //skip inconsistent issue
                 case INCONSISTENT:
-                    inconsistentCnt++;
+                    inconsistentCounter++;
                     break;
-                case NULL_EMPTY:
-                    emptyCnt++;
-                    break;
+                // skip iv = fv
                 case IV_IS_FV:
-                    sameVersionCnt++;
+                    ivIsFvCounter++;
                     break;
+                // skip empty touched files
+                case EMPTY_TOUCHED_FILES:
+                    emptyTouchedFilesCounter++;
+                    break;
+                // skip injected after last release
+                case AFTER_LAST_RELEASE:
+                    afterLastCounter++;
+                    break;
+                // valid
                 case VALID:
                 default:
                     filteredList.add(issue);
                     break;
             }
-            totalCnt ++;
+
         }
-        //reorder
-        filteredList.sort((Issue i1, Issue i2) -> i1.getIndex().compareTo(i2.getIndex()));
 
         this.issueList = filteredList;
-        //log final report
-        report = "\n-Total issues parsed: " + totalCnt +  "\n-Valid issues: " + this.issueList.size() + "\n-Issues filtered for null Version: " + nullVersionCnt + "\n-Issues filtered for data inconsistency: " + inconsistentCnt + "\n-Issues filtered for empty commit list and null injected version: " + emptyCnt + "\n-Issues filtered for injected version equals to fix version: " + sameVersionCnt + "\n";
-        LOGGER.log(Level.INFO, report);
 
+        //log final report
+        report = "\n-Total issues parsed: " + totalCnt +  "\n-Valid issues: " + this.issueList.size() + "\n-Issues filtered for inconsistency: " + inconsistentCounter + "\n-Issues filtered for iv=fv: " + ivIsFvCounter + "\n-Issues filtered for empty touched files: " + emptyTouchedFilesCounter + "\n-Issues filtered for injected version after last release considered: " + afterLastCounter + "\n";
+        LOGGER.log(Level.INFO, report);
 
     }
 
@@ -129,7 +141,7 @@ public class IssueManager {
     }
 
 
-    private void retrieveIssues() throws JSONException, IOException {
+    private void retrieveIssues() throws JSONException, IOException, InterruptedException {
         LOGGER.log(Level.INFO, "Retrieving issues and related data");
 
         int i = 0;
@@ -178,7 +190,7 @@ public class IssueManager {
                 // generate issue and related commmits
                 issue = new Issue(id, key, injectedVersion, fixVersion, openingVersion);
                 commitList = this.gitBoundary.getIssueCommit(issue);
-                issue.setCommitList(commitList);
+                issue.setCommitList(commitList, this.gitBoundary);
 
                 switch(issue.validateIssue()){
                     //skip issue because opening or fix versions are null
@@ -318,6 +330,36 @@ public class IssueManager {
             p = sum/count;
 
         return p;
+    }
+
+    private void setBuggy() {
+        List<Release> sublist = this.releaseManager.getReleaseSubset();
+        Release injectedVersion;
+        Release fixVersion;
+        Release lastRelease = this.releaseManager.getLastReleaseConsidered();
+        Release release;
+        JavaFile fileTouched;
+        int i;
+
+        LOGGER.log(Level.INFO, "Tagging classes as buggy");
+
+        for(Issue issue: this.issueList){
+            injectedVersion = issue.getInjectedVersion();
+            fixVersion = issue.getFixVersion();
+            //fromInjected included to fixVersion excluded
+            //Warning to size of considered releases
+            for(i=injectedVersion.getReleaseIndex(); i < fixVersion.getReleaseIndex() && i <= lastRelease.getReleaseIndex(); i++) {
+                //release indexes start from 1
+                release = sublist.get(i-1);
+                //set buggy all files  touched by issues' commits
+                for(String fileName:issue.getTouchedFiles()) {
+                    fileTouched = release.getClassByName(fileName);
+                    if(fileTouched != null)
+                        fileTouched.setBuggy();
+                }
+            }
+        }
+        LOGGER.log(Level.INFO, "Phase completed");
     }
 
 

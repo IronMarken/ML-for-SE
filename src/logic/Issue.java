@@ -1,5 +1,6 @@
 package logic;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,9 @@ public class Issue {
         INCONSISTENT,
         NULL_EMPTY,
         IV_IS_FV,
-        VALID
+        VALID,
+        AFTER_LAST_RELEASE,
+        EMPTY_TOUCHED_FILES
     }
 
 
@@ -64,8 +67,16 @@ public class Issue {
         return valid;
     }
 
-    public void setCommitList(List<Commit> commitList) {
+    public void setCommitList(List<Commit> commitList, GitBoundary gitBoundary) throws IOException, InterruptedException {
         this.commitList = commitList;
+        List<CommitFileData> dataList;
+        //retrieve commit data
+        for(Commit commit: this.commitList){
+            dataList = gitBoundary.getCommitData(commit.getSha());
+            if (!dataList.isEmpty()) {
+                commit.setTouchedFiles(dataList);
+            }
+        }
         this.retrieveTouchedFiles();
     }
 
@@ -86,6 +97,19 @@ public class Issue {
         return Status.VALID;
     }
 
+    public Status validateIssueAfterProportion(Release lastRelease) {
+        // check versions consistency
+        if(!this.isConsistent()) return Status.INCONSISTENT;
+        // check iv= fv
+        if(this.injectedVersion.getReleaseIndex() == this.fixVersion.getReleaseIndex()) return Status.IV_IS_FV;
+        // check empty touched files
+        if(this.touchedFiles.isEmpty()) return Status.EMPTY_TOUCHED_FILES;
+        // check if injected is after last release considered
+        if(this.injectedVersion.getReleaseIndex() > lastRelease.getReleaseIndex()) return Status.AFTER_LAST_RELEASE;
+        // all check passed
+        return Status.VALID;
+    }
+
     public Release getFixVersion() {
         return this.fixVersion;
     }
@@ -101,4 +125,6 @@ public class Issue {
     public void setInjectedVersion(Release injectedVersion) {
         this.injectedVersion = injectedVersion;
     }
+
+    public List<String> getTouchedFiles() { return this.touchedFiles; }
 }

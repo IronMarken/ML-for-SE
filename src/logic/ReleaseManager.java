@@ -335,4 +335,10 @@ public class ReleaseManager {
     public List<Release> getUnreleased() {
         return this.unreleased;
     }
+
+    public Release getLastReleaseConsidered() {
+        return this.releaseSubset.get(this.releaseSubset.size()-1);
+    }
+
+    public List<Release> getReleaseSubset() { return this.releaseSubset; }
 }
