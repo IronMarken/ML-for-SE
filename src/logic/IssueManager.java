@@ -273,7 +273,7 @@ public class IssueManager {
                 issue.setInjectedVersion(injectedVersion);
 
                 // report
-                report = "Issue: " + issue.getIndex() +
+                report = "Issue: " + issue.getIndex() + " id: " + issue.getId() +
                         "\n-p value: " + p +
                         "\n-Fix version: " + fixVersion.getGitName() + " " + fixVersion.getReleaseIndex() +
                         "\n-Opening version: " + openingVersion.getGitName() + " " + openingVersion.getReleaseIndex() +

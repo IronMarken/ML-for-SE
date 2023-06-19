@@ -127,4 +127,8 @@ public class Issue {
     }
 
     public List<String> getTouchedFiles() { return this.touchedFiles; }
+
+    public String getId() {
+        return id;
+    }
 }

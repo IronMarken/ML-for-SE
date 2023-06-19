@@ -221,7 +221,7 @@ public class ReleaseManager {
             release = this.releaseSubset.get(i);
             maxDate = release.getReleaseDate();
             commitList = this.gitBoundary.getReleaseCommits(minDate, maxDate);
-            outString = "Release name: " + release.getGitName() + " Commits retrieved: " + commitList.size();
+            outString = "Release name: " + release.getGitName() + " " + release.getReleaseID() + " Commits retrieved: " + commitList.size();
             LOGGER.log(Level.INFO, outString);
             commitList = this.retrieveCommitsData(commitList);
             release.setCommitList(commitList);

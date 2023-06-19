@@ -205,7 +205,7 @@ public class JavaFile {
         return nFix;
     }
 
-    public Boolean isBuggy() {
+    public boolean isBuggy() {
         return this.buggy;
     }
 

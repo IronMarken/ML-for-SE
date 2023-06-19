@@ -68,11 +68,11 @@ public class FileManager {
 
         if (addComments) {
             dataToConvert.add(COLUMNS_COMM);
-            datasetFileName = DIR_NAME + File.pathSeparator + projectName + "WithCommentsPercentage" + FILE_EXT;
+            datasetFileName = DIR_NAME + File.separator + projectName + "WithCommentsPercentage" + FILE_EXT;
         }
         else {
             dataToConvert.add(COLUMNS);
-            datasetFileName = DIR_NAME + File.pathSeparator + projectName + FILE_EXT;
+            datasetFileName = DIR_NAME + File.separator + projectName + FILE_EXT;
         }
 
         //file metrics

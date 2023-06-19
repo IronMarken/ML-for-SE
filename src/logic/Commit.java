@@ -4,9 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Commit {
 
+    private static final Logger LOGGER = Logger.getLogger(Commit.class.getName());
     private String sha;
     private String message;
     private String author;
@@ -43,5 +46,9 @@ public class Commit {
             nameList.add(fileData.getName());
         }
         return nameList;
+    }
+
+    public void logMessage(){
+        LOGGER.log(Level.INFO, message);
     }
 }

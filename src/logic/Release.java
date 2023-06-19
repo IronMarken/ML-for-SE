@@ -76,4 +76,6 @@ public class Release {
     }
 
     public String getJiraName() { return this.jiraName; }
+
+    public String getReleaseID() { return this.releaseID; }
 }
