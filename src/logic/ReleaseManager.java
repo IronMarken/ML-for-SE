@@ -341,4 +341,19 @@ public class ReleaseManager {
     }
 
     public List<Release> getReleaseSubset() { return this.releaseSubset; }
+
+    public List<JavaFile> getDataList(){
+
+        List<JavaFile> finalList = new ArrayList<>();
+        List<JavaFile> relList;
+
+
+        for(Release rel:this.releaseSubset) {
+            relList = rel.getJavaFiles();
+            relList.sort((JavaFile jf1, JavaFile jf2) -> jf1.getName().compareTo(jf2.getName()));
+            finalList.addAll(relList);
+        }
+
+        return finalList;
+    }
 }

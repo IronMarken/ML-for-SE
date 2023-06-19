@@ -14,6 +14,7 @@ public class Main {
         IssueManager im;
         String[] splitted;
         String projName;
+        List<JavaFile> dataList;
 
         for (String gitUrl:urlList) {
 
@@ -28,6 +29,12 @@ public class Main {
             rm.setupReleaseManager();
 
             im.setupIssues();
+
+            dataList = rm.getDataList();
+
+            FileManager.generateOutputDir();
+            FileManager.generateDatasetCsv(projName, dataList, false);
+            FileManager.generateDatasetCsv(projName, dataList, true);
         }
     }
 }

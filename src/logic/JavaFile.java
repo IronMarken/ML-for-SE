@@ -3,6 +3,7 @@ package logic;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JavaFile {
@@ -104,4 +105,109 @@ public class JavaFile {
         this.buggy = true;
         this.nFix++;
     }
+
+    public int getReleaseIndex() {
+        return releaseIndex;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public float getCommentsPercentage() {
+        return commentsPercentage;
+    }
+
+    public long getTouchedLOC() {
+        return touchedLOC;
+    }
+
+    public int getCommitCount() {
+        return commitCount;
+    }
+
+    public int getAuthorCount() {
+        return this.authorList.size();
+    }
+
+    public int getTotalAddedLOC() {
+        if(this.addedList.isEmpty())
+            return 0;
+        else
+            return this.addedList.stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public Integer getMaxAddedLOC() {
+        if(this.addedList.isEmpty())
+            return 0;
+        else
+            return Collections.max(this.addedList);
+    }
+
+    public double getAvgAddedLOC() {
+        if(this.addedList.isEmpty())
+            return 0;
+        else
+            return this.addedList.stream().mapToDouble(a->a).average().getAsDouble();
+    }
+
+    public Integer getTotalChurn() {
+        if(this.churnList.isEmpty())
+            return 0;
+        else
+            return this.churnList.stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public Integer getMaxChurn() {
+        if(this.churnList.isEmpty())
+            return 0;
+        else
+            return Collections.max(this.churnList);
+    }
+
+    public double getAvgChurn() {
+        if(this.churnList.isEmpty())
+            return 0;
+        else
+            return this.churnList.stream().mapToDouble(a->a).average().getAsDouble();
+    }
+
+    public Integer getTotalChgSetSize() {
+        if(this.chgSetSizeList.isEmpty())
+            return 0;
+        else
+            return this.chgSetSizeList.stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public Integer getMaxChgSetSize() {
+        if(this.chgSetSizeList.isEmpty())
+            return 0;
+        else
+            return Collections.max(this.chgSetSizeList);
+    }
+
+    public double getAvgChgSetSize() {
+        if(this.chgSetSizeList.isEmpty())
+            return 0;
+        else
+            return this.chgSetSizeList.stream().mapToDouble(a->a).average().getAsDouble();
+    }
+
+    public long getAge() {
+        return this.age;
+    }
+
+    public long getWeightedAge() {
+        return this.age * this.touchedLOC;
+    }
+
+    public int getNFix() {
+        return nFix;
+    }
+
+    public Boolean isBuggy() {
+        return this.buggy;
+    }
+
+
 }
