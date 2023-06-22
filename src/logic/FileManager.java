@@ -13,21 +13,38 @@ import java.util.stream.Stream;
 public class FileManager {
 
     private static final Logger LOGGER = Logger.getLogger(FileManager.class.getName());
-    private static final String DIR_NAME = "output";
+    private static final String DATASET_DIR = "dataset";
+    private static final String OUTPUT_DIR = "output";
+    private static final String COMM_NAME = "-wc";
+    private static final String EVAL_NAME = "-final";
+    private static final String[] WEKA_COLUMNS = new String[] {"Dataset","#TrainingRelease","%Training","%Defective training", "%Defective testing", "Classifier", "Balancing", "Feature Selection", "Sensitivity", "TP", "FP", "TN", "FN", "Precision", "Recall", "AUC", "Kappa"};
     private static final String FILE_EXT = ".csv";
     private static final String[] COLUMNS = new String[] {"ReleaseNumber","JavaFile", "Size", "LOCtouched", "NR", "NAuth", "LOCadded","MAX_LOCadded", "AVG_LOCadded", "Churn", "MAX_Churn", "AVG_Churn", "ChgSetSize", "MAX_ChgSet", "AVG_ChgSet", "Age","WeightedAge", "NFix" ,"Buggy"};
     private static final String[] COLUMNS_COMM = new String[] {"ReleaseNumber","JavaFile", "Size", "CommentsPercentage" , "LOCtouched", "NR", "NAuth", "LOCadded","MAX_LOCadded", "AVG_LOCadded", "Churn", "MAX_Churn", "AVG_Churn", "ChgSetSize", "MAX_ChgSet", "AVG_ChgSet", "Age","WeightedAge", "NFix" ,"Buggy"};
 
     private FileManager() {}
 
+    public static void generateDatasetDir() {
+        //check if output directory exists
+        File dir = new File(DATASET_DIR);
+        if(!dir.isDirectory()) {
+            if(dir.mkdir()) {
+                LOGGER.log(Level.INFO, "Generating dataset directory");
+            }else{
+                LOGGER.log(Level.INFO, "Error during dataset directory generation");
+            }
+        }else
+            LOGGER.log(Level.INFO, "Dataset directory already exists");
+    }
+
     public static void generateOutputDir() {
         //check if output directory exists
-        File dir = new File(DIR_NAME);
+        File dir = new File(OUTPUT_DIR);
         if(!dir.isDirectory()) {
             if(dir.mkdir()) {
                 LOGGER.log(Level.INFO, "Generating output directory");
             }else{
-                LOGGER.log(Level.INFO, "Error during directory generation");
+                LOGGER.log(Level.INFO, "Error during output directory generation");
             }
         }else
             LOGGER.log(Level.INFO, "Output directory already exists");
@@ -68,11 +85,11 @@ public class FileManager {
 
         if (addComments) {
             dataToConvert.add(COLUMNS_COMM);
-            datasetFileName = DIR_NAME + File.separator + projectName + "WithCommentsPercentage" + FILE_EXT;
+            datasetFileName = DATASET_DIR + File.separator + projectName + COMM_NAME + FILE_EXT;
         }
         else {
             dataToConvert.add(COLUMNS);
-            datasetFileName = DIR_NAME + File.separator + projectName + FILE_EXT;
+            datasetFileName = DATASET_DIR + File.separator + projectName + FILE_EXT;
         }
 
         //file metrics
@@ -159,7 +176,7 @@ public class FileManager {
             //weighted age
             weightedAge = file.getWeightedAge();
 
-            //nfix
+            //n fix
             nFix = file.getNFix();
 
             //buggy
@@ -181,6 +198,65 @@ public class FileManager {
         }catch(IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static boolean datasetExists(String projectName, boolean addComments) {
+        String fullPath;
+        if(addComments){
+            fullPath = DATASET_DIR + File.separator + projectName + COMM_NAME + FILE_EXT;
+        }else{
+            fullPath = DATASET_DIR + File.separator + projectName + FILE_EXT;
+        }
+
+        File filePath = new File(fullPath);
+        return filePath.exists();
+    }
+
+    public static String getDatasetPath(String projectName, boolean addComments){
+        String fullPath;
+        if(addComments){
+            fullPath = DATASET_DIR + File.separator + projectName + COMM_NAME + FILE_EXT;
+        }else{
+            fullPath = DATASET_DIR + File.separator + projectName + FILE_EXT;
+        }
+
+        return fullPath;
+    }
+
+    public static void generateFinalCsv(String projectName, List<List<WekaData>> resultData, boolean addComments) {
+        List<String[]> dataToPrint = new ArrayList<>();
+        dataToPrint.add(WEKA_COLUMNS);
+
+        String evaluationPath;
+        if(addComments)
+            evaluationPath = OUTPUT_DIR + File.separator + projectName + COMM_NAME + EVAL_NAME + FILE_EXT;
+        else
+            evaluationPath = OUTPUT_DIR + File.separator + projectName + EVAL_NAME + FILE_EXT;
+
+
+        for(List<WekaData> stepData:resultData){
+            for(WekaData data:stepData) {
+                dataToPrint.add(new String[] {data.getDatasetName(), String.valueOf(data.getTrainingRelease()), String.valueOf(data.getTrainingData()), String.valueOf(data.getDefectiveTraining()), String.valueOf(data.getDefectiveTesting()), data.getClassifier(), data.getBalancing(), data.getFeatureSelection(), data.getSensitivity(), String.valueOf(data.getTruePositive()), String.valueOf(data.getFalsePositive()), String.valueOf(data.getTrueNegative()), String.valueOf(data.getFalseNegative()), String.valueOf(data.getPrecision()), String.valueOf(data.getRecall()), String.valueOf(data.getAuc()), String.valueOf(data.getKappa())});
+            }
+        }
+        try {
+            toCsv(evaluationPath, dataToPrint);
+
+        }catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean evaluationExists(String projectName, boolean addComments) {
+        String fullPath;
+        if(addComments){
+            fullPath = OUTPUT_DIR + File.separator + projectName + COMM_NAME + EVAL_NAME + FILE_EXT;
+        }else{
+            fullPath = OUTPUT_DIR + File.separator + projectName +  EVAL_NAME + FILE_EXT;
+        }
+
+        File filePath = new File(fullPath);
+        return filePath.exists();
     }
 
 }

@@ -41,6 +41,20 @@ public class ReleaseManager {
         this.retrieveReleaseCommit();
         //calculate classes data
         this.retrieveData();
+        this.filterJavaFiles();
+    }
+
+    private void filterJavaFiles() {
+
+        for(Release release : this.releaseSubset) {
+            List<JavaFile> newList = new ArrayList<>();
+            for(JavaFile java : release.getJavaFiles()){
+                if(!(java.getTouchedLOC() == 0 &&  java.getCommitCount() == 0 && java.getAvgChgSetSize() == 0 && java.getAvgChurn() == 0)){
+                    newList.add(java);
+                }
+            }
+            release.setJavaFiles(newList);
+        }
     }
 
 
@@ -173,7 +187,7 @@ public class ReleaseManager {
     private void retrieveJavaFileSize() throws IOException, InterruptedException, JSONException {
         Release release;
         int relSize = this.releaseSubset.size();
-        int index = 0;
+        int index;
         List<Integer> sizes;
         LOGGER.log(Level.INFO, "Calculating file size for each file in each release");
         for (index = 0; index < relSize; index++) {

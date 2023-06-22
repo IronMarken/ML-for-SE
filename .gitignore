@@ -7,8 +7,8 @@ out/
 
 ### Output directories ###
 repo/
+dataset/
 output/
-
 
 ### Eclipse ###
 .apt_generated
