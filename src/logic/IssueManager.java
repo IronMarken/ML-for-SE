@@ -183,8 +183,8 @@ public class IssueManager {
                 openingDate = issuesJson.getJSONObject(i%1000).getJSONObject(ISSUE_FIELDS).getString("created").split("T")[0];
 
 
-                injectedVersion = this.retrieveInjectedVersion(issuesJson.getJSONObject(i).getJSONObject(ISSUE_FIELDS).getJSONArray("versions"));
-                fixVersion = this.retrieveFixedVersion(issuesJson.getJSONObject(i).getJSONObject(ISSUE_FIELDS).getJSONArray("fixVersions"));
+                injectedVersion = this.retrieveInjectedVersion(issuesJson.getJSONObject(i%1000).getJSONObject(ISSUE_FIELDS).getJSONArray("versions"));
+                fixVersion = this.retrieveFixedVersion(issuesJson.getJSONObject(i%1000).getJSONObject(ISSUE_FIELDS).getJSONArray("fixVersions"));
                 openingVersion = this.releaseManager.getReleaseFromDate(openingDate);
 
                 // generate issue and related commmits
